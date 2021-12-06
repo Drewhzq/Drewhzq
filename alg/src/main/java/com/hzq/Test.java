@@ -5,7 +5,7 @@ public class Test {
 
     static class A
     {
-        ////1111122222
+        ////11111222223333
         A a = new A();
     }
 
