@@ -1,5 +1,7 @@
 package com.hzq;
 
+import java.util.HashMap;
+
 public class PrefixTree {
 
     public static class Node1
@@ -108,29 +110,168 @@ public class PrefixTree {
          */
         public void delete(String word)
         {
+            if(search(word) != 0)
+            {
+                if(word == null || word.isEmpty())
+                {
+                    return;
+                }
+                final char[] strs = word.toCharArray();
+                Node1 node = root;
+                node.pass--;
+                for(int i = 0;i<strs.length;i++)
+                {
+                    int path = strs[i] - 'a';
+                    if(--node.nodo1[path].pass == 0)
+                    {
+                        node.nodo1[path] = null;
+                        return;
+                    }
+                    node = node.nodo1[path];
+                }
+                node.end--;
+            }
+        }
+
+
+    }
+
+
+    public static class Node2
+    {
+        private int pass;
+        private int end;
+
+        private HashMap<Integer, Node2> next;
+
+        public Node2()
+        {
+            this.pass = 0;
+            this.end = 0;
+            this.next = new HashMap<>();
+        }
+    }
+    public static class PrefixTree1
+    {
+        private Node2 root;
+
+        public PrefixTree1()
+        {
+            root = new Node2();
+        }
+
+        /**
+         * insert method
+         * @param word
+         */
+        public void insert(String word)
+        {
             if(word == null || word.isEmpty())
             {
                 return;
             }
+
             final char[] strs = word.toCharArray();
-            Node1 node = root;
-            node.pass--;
-            for(int i = 0;i<strs.length;i++)
+            Node2 node = root;
+            node.pass++;
+            for(int i = 0; i<strs.length;i++)
             {
                 int path = strs[i] - 'a';
-                if(--node.nodo1[path].pass == 0)
+                if(node.next.get(path) == null)
                 {
-                    node.nodo1[path] = null;
-                    return;
+                    final Node2 node2 = new Node2();
+                    node.next.put(path, node2);
                 }
-                node = node.nodo1[path];
+                node.next.get(path).pass++;
+                node = node.next.get(path);
             }
-            node.end--;
-
+            node.end++;
 
         }
 
 
+        /**
+         * search method
+         * @param word
+         * @return
+         */
+        public int search(String word)
+        {
+            if(word == null || word.isEmpty())
+            {
+                return 0;
+            }
+            final char[] strs = word.toCharArray();
+            Node2 node = root;
+            for(int i = 0; i<strs.length;i++)
+            {
+                int path = strs[i] - 'a';
+                if(node.next.get(path) == null)
+                {
+                    return 0;
+                }
+                node = node.next.get(path);
+            }
+            return node.end;
+        }
+
+        /**
+         *
+         * @param word
+         * @return
+         */
+        public int prefix(String word)
+        {
+           if(word == null || word.isEmpty())
+           {
+               return 0;
+           }
+            final char[] strs = word.toCharArray();
+           Node2 node = root;
+           for(int i = 0;i<strs.length;i++)
+           {
+               int path = strs[i] - 'a';
+               if(node.next.get(path) == null)
+               {
+                   return 0;
+               }
+               node = node.next.get(path);
+           }
+           return node.pass;
+        }
+
+        /**
+         * delete method
+         * @param word
+         */
+        public void delete(String word)
+        {
+            if(search(word) != 0)
+            {
+                if(word == null || word.isEmpty())
+                {
+                    return;
+                }
+                Node2 node = root;
+                node.pass--;
+                final char[] strs = word.toCharArray();
+                for(int i = 0 ; i<strs.length;i++)
+                {
+                    int path = strs[i] - 'a';
+
+                    if(--node.next.get(path).pass == 0)
+                    {
+                        node.next.remove(path);
+                        return;
+                    }
+                    node = node.next.get(path);
+                }
+                node.end--;
+
+
+            }
+
+        }
     }
 
 
@@ -144,9 +285,26 @@ public class PrefixTree {
         tree.insertTree("nbc");
         tree.insertTree("hbc");
         tree.insertTree("abc");
-        final int a = tree.search("abc");
+        final int a = tree.search("ac");
         final int b= tree.searchPrefix("a");
+        System.out.println(a);
         System.out.println(b);
+
+
+
+        final PrefixTree1 tree1 = new PrefixTree1();
+        tree1.insert("abc");
+        tree1.insert("ac");
+        tree1.insert("bcv");
+        tree1.insert("avc");
+        tree1.insert("nbc");
+        tree1.insert("hbc");
+        tree1.insert("abc");
+        final int a1 = tree1.search("ac");
+        final int b1= tree1.prefix("a");
+        System.out.println(a1);
+
+        System.out.println(b1);
     }
 
 
