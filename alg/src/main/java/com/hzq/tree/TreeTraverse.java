@@ -392,6 +392,45 @@ public class TreeTraverse {
         return root;
     }
 
+
+    /**
+     * 给定一棵树其中的一个节点 p ，找到该节点在树中的中序后继。该树有左孩子、右孩子、父节点三个指针
+     * 如果节点没有中序后继，请返回 null 。
+     * 节点 p 的后继是值比 p.val 大的节点中键值最小的节点，即按中序遍历的顺序节点 p 的下一个节点。*
+     * @param
+     * @return
+     */
+    public TreeNode inorderSuccessor(TreeNode p) {
+
+        if(p == null)
+        {
+            return null;
+        }
+        //若p有右孩子，则它的中序后继节点是它的右孩子的最左节点
+        if(p.right != null)
+        {
+            return findLeftMore(p);
+        }
+        //若p没有右孩子，要想寻找它的后继节点，需找到它是它的祖先节点左子树的最右节点，则这个祖先节点为它的后继节点
+        TreeNode parent = p.parent;
+        while(parent != null || parent.right == p)
+        {
+            p = parent;
+            parent = p.parent;
+        }
+        return parent;
+    }
+
+    private TreeNode findLeftMore(TreeNode p) {
+       TreeNode right = p.right;
+
+       while(right.left != null)
+       {
+           right = right.left;
+       }
+       return right;
+    }
+
     private static TreeNode buildTreeNode(Deque<String> queue) {
         final String poll = queue.poll();
         if("null".equals(poll) || poll == null)
