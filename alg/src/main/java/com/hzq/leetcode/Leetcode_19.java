@@ -22,30 +22,58 @@ public class Leetcode_19 {
         }
     }
 
+//    public ListNode removeNthFromEnd(ListNode head, int n) {
+//
+//        if (head == null) {
+//            return null;
+//        }
+//        ListNode fast = head;
+//        ListNode slow = head;
+//        ListNode next = null;
+//        while (fast != null) {
+//            if (n != 0) {
+//                next = fast.next;
+//                fast = next;
+//                n--;
+//            } else {
+//                next = fast.next;
+//                slow = head.next;
+//
+//                if (fast.next == null) {
+//                    slow.next = slow.next.next;
+//                    break;
+//                }
+//                fast = next;
+//            }
+//        }
+//        return head;
+//    }
+
     public ListNode removeNthFromEnd(ListNode head, int n) {
+        ListNode cur = head;
+        ListNode per = null;
 
-        if (head == null) {
-            return null;
-        }
-        ListNode fast = head;
-        ListNode slow = head;
-        ListNode next = null;
-        while (fast != null) {
-            if (n != 0) {
-                next = fast.next;
-                fast = next;
-                n--;
-            } else {
-                next = fast.next;
-                slow = head.next;
-
-                if (fast.next == null) {
-                    slow.next = slow.next.next;
-                    break;
-                }
-                fast = next;
+        while (cur != null) {
+            if (n == 0) {
+                per = head;
+            } else if (n < 0) {
+                per = per.next;
             }
+            cur = cur.next;
+            n--;
         }
-        return head;
+
+        if (n > 0) {
+            return head;
+        }
+
+
+        if (per == null) {
+            return head.next;
+        } else {
+            per.next = per.next.next;
+            return head;
+        }
+
     }
 }
