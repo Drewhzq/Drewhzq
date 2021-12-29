@@ -1,5 +1,8 @@
 package com.hzq.leetcode;
 
+import java.util.List;
+import java.util.Stack;
+
 /**
  * 给你一个链表，每 k 个节点一组进行翻转，请你返回翻转后的链表。
  * <p>
@@ -35,22 +38,79 @@ public class Leetcode_25 {
         }
     }
 
+    /**
+     * 里哟栈实现
+     *
+     * @param head
+     * @param k
+     * @return
+     */
     public ListNode reverseKGroup(ListNode head, int k) {
 
-        if(head == null || k == 0 || k == 1)
-        {
-            return  head;
+        if (head == null || k == 0 || k == 1) {
+            return head;
         }
 
         ListNode newHead = new ListNode(0);
-        newHead.next = head;
-        ListNode cur = newHead;
-        process(cur,k);
+        ListNode p = newHead;
+        ListNode cur = head;
+
+        while(true)
+        {
+            int count = 0;
+            Stack<ListNode> stack = new Stack<>();
+            while(cur != null && k > count)
+            {
+                stack.add(cur);
+                cur = cur.next;
+                count++;
+            }
+
+            if(k > count)
+            {
+                p.next = head;
+                break;
+            }
+            while(!stack.isEmpty())
+            {
+                p.next = stack.pop();
+                p = p.next;
+            }
+            p.next = cur;
+            head = cur;
+        }
         return newHead.next;
     }
 
-    private void process(ListNode cur, int k) {
+    public ListNode reverseKGroup1(ListNode head, int k) {
 
+        ListNode cur = head;
+        int count = 0;
+        while(cur != null && count < k)
+        {
+            count++;
+            cur = cur.next;
+        }
+
+        if(count == k)
+        {
+            cur = reverseKGroup(cur,k);
+            while(count != 0)
+            {
+                ListNode tmp = head.next;
+
+                head.next = cur;
+                cur = head;
+
+                head = tmp;
+                count--;
+            }
+            head = cur;
+        }
+        return head;
 
     }
+
+
+
 }
