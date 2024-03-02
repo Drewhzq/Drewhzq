@@ -1,0 +1,16 @@
+    private Map<String, SpaVO> queryLatestValidBpa(List<SpaControl> spaControls) {
+        List<SpaVO> latestValidParams = SpaControlToSpaVOConverter.INSTANCE.convert(spaControls);
+        Map<String, SpaVO> uniqueKeyToSpaVOMap = new HashMap<>();
+        // 去重，查最新有效并将结果转成 Map<查询条件key, 查询结果>
+        for (SpaVO bpa : latestValidParams) {
+            String uniqueKey = getSpaVOUniqueKey(bpa);
+            if (!uniqueKeyToSpaVOMap.containsKey(uniqueKey)) {
+                initQueryParam(bpa);
+                SpaVO validBpa = spaService.getLatestValidSpaByQuery(bpa);
+                if (validBpa != null) {
+                    uniqueKeyToSpaVOMap.put(uniqueKey, validBpa);
+                }
+            }
+        }
+        return uniqueKeyToSpaVOMap;
+    }
