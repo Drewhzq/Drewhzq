@@ -1,0 +1,45 @@
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
+import org.apache.commons.compress.utils.IOUtils;
+
+import java.io.ByteArrayInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.List;
+
+public class ZipBasedOnType {
+    public static void main(String[] args) {
+        List<String> jsonStrings = List.of(
+                "{\"type\": \"starling\", \"content\": \"This is a Starling JSON content\"}",
+                "{\"type\": \"abec\", \"content\": \"This is an ABEC JSON content\"}"
+        );
+
+        try (FileOutputStream starlingFos = new FileOutputStream("/path/to/starling.zip");
+             ZipArchiveOutputStream starlingZip = new ZipArchiveOutputStream(starlingFos);
+             FileOutputStream abecFos = new FileOutputStream("/path/to/abec.zip");
+             ZipArchiveOutputStream abecZip = new ZipArchiveOutputStream(abecFos)) {
+
+            for (String jsonString : jsonStrings) {
+                String type = getType(jsonString);
+                ZipArchiveOutputStream targetZip = type.equals("starling") ? starlingZip : abecZip;
+                ZipArchiveEntry entry = new ZipArchiveEntry("file_" + type + ".json");
+                targetZip.putArchiveEntry(entry);
+                ByteArrayInputStream bis = new ByteArrayInputStream(jsonString.getBytes());
+                IOUtils.copy(bis, targetZip);
+                bis.close();
+                targetZip.closeArchiveEntry();
+            }
+
+            starlingZip.finish();
+            abecZip.finish();
+
+            System.out.println("JSON内容根据类型成功打入指定的zip包！");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static String getType(String jsonString) {
+        return jsonString.contains("\"type\": \"starling\"") ? "starling" : "abec";
+    }
+}
