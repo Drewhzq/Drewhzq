@@ -1,13 +1,40 @@
-    private Map<String, SpaVO> queryLatestValidBpa_1(List<SpaControl> spaControls) {
-        Map<String, SpaVO> uniqueKeyToSpaVOMap = new ConcurrentHashMap<>();
-        List<SpaVO> latestValidParams = SpaControlToSpaVOConverter.INSTANCE.convert(spaControls);
-        latestValidParams.forEach(bpa->liteCompletableFuture.runAsync(() -> {
-            initQueryParam(bpa);
-            String uniqueKey = getSpaVOUniqueKey(bpa);
-            SpaVO validBpa = spaService.getLatestValidSpaByQuery(bpa);
-            if (validBpa != null) {
-                uniqueKeyToSpaVOMap.put(uniqueKey, validBpa);
-            }
-        }, executor));
-        return uniqueKeyToSpaVOMap;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
+import org.apache.commons.compress.utils.IOUtils;
+
+import java.io.*;
+
+public class ZipFolderApache {
+    public static void main(String[] args) {
+        String sourceFolderPath = "/path/to/source/folder"; // 替换为实际的源文件夹路径
+        String zipFilePath = "/path/to/output/zip/file.zip"; // 替换为实际的输出zip文件路径
+
+        try {
+            FileOutputStream fos = new FileOutputStream(zipFilePath);
+            ZipArchiveOutputStream zos = new ZipArchiveOutputStream(fos);
+            zipFolder(sourceFolderPath, "", zos);
+            zos.finish();
+            zos.close();
+            fos.close();
+            System.out.println("文件夹已成功压缩为zip包！");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
+
+    public static void zipFolder(String sourceFolderPath, String entryName, ZipArchiveOutputStream zos) throws IOException {
+        File sourceFolder = new File(sourceFolderPath);
+        for (File file : sourceFolder.listFiles()) {
+            if (file.isDirectory()) {
+                zipFolder(file.getAbsolutePath(), entryName + file.getName() + "/", zos);
+            } else {
+                ZipArchiveEntry zipEntry = new ZipArchiveEntry(entryName + file.getName());
+                zos.putArchiveEntry(zipEntry);
+                FileInputStream fis = new FileInputStream(file);
+                IOUtils.copy(fis, zos);
+                fis.close();
+                zos.closeArchiveEntry();
+            }
+        }
+    }
+}
