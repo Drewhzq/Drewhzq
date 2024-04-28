@@ -3,32 +3,42 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.compress.utils.IOUtils;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
-public class ZipFolderApache {
+public class ZipMultipleFolders {
     public static void main(String[] args) {
-        String sourceFolderPath = "/path/to/source/folder"; // 替换为实际的源文件夹路径
+        List<String> sourceFolders = new ArrayList<>();
+        sourceFolders.add("/path/to/source/folder1"); // 替换为实际的第一个源文件夹路径
+        sourceFolders.add("/path/to/source/folder2"); // 替换为实际的第二个源文件夹路径
         String zipFilePath = "/path/to/output/zip/file.zip"; // 替换为实际的输出zip文件路径
 
         try {
             FileOutputStream fos = new FileOutputStream(zipFilePath);
             ZipArchiveOutputStream zos = new ZipArchiveOutputStream(fos);
-            zipFolder(sourceFolderPath, "", zos);
+            for (String sourceFolderPath : sourceFolders) {
+                File sourceFolder = new File(sourceFolderPath);
+                zipFolder(sourceFolder, zos);
+            }
             zos.finish();
             zos.close();
             fos.close();
-            System.out.println("文件夹已成功压缩为zip包！");
+            System.out.println("多个文件夹已成功打包成zip文件！");
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public static void zipFolder(String sourceFolderPath, String entryName, ZipArchiveOutputStream zos) throws IOException {
-        File sourceFolder = new File(sourceFolderPath);
+    public static void zipFolder(File sourceFolder, ZipArchiveOutputStream zos) throws IOException {
+        ZipArchiveEntry zipEntry = new ZipArchiveEntry(sourceFolder.getName() + "/");
+        zos.putArchiveEntry(zipEntry);
+        zos.closeArchiveEntry();
+
         for (File file : sourceFolder.listFiles()) {
             if (file.isDirectory()) {
-                zipFolder(file.getAbsolutePath(), entryName + file.getName() + "/", zos);
+                zipFolder(file, zos);
             } else {
-                ZipArchiveEntry zipEntry = new ZipArchiveEntry(entryName + file.getName());
+                zipEntry = new ZipArchiveEntry(sourceFolder.getName() + "/" + file.getName());
                 zos.putArchiveEntry(zipEntry);
                 FileInputStream fis = new FileInputStream(file);
                 IOUtils.copy(fis, zos);
