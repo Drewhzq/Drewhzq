@@ -1,1 +1,11 @@
 INSERT INTO "mit_base"."admin_organization_t" VALUES (153823, '026685', '619884', NULL, '白俄罗斯咨询与服务解决方案销售部', 'Belarus Consulting & Service Solution Sales Dept', '026683', '3071', 4, 'HR_ORG', 'Z33', '3307', '2009-05-20 00:00:00', '2018-04-12 00:00:00', 'N', -1, '2021-11-16 19:03:25.406', -1, '2024-06-24 11:57:18.998009', 'ed590e7e-feed-43d5-bc73-9d40f0cd10df', 2100000, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '022471', 'N', NULL);
+#!/bin/bash
+
+# 定义包含目标字符串的变量
+string='INSERT INTO "mit_base"."admin_organization_t" VALUES (153823, '\''026685'\'', '\''619884'\'', NULL, '\''白俄罗斯咨询与服务解决方案销售部'\'', '\''Belarus Consulting & Service Solution Sales Dept'\'', '\''026683'\'', '\''3071'\'', 4, '\''HR_ORG'\'', '\''Z33'\'', '\''3307'\'', '\''2009-05-20 00:00:00'\'', '\''2018-04-12 00:00:00'\'', '\''N'\'', -1, '\''2021-11-16 19:03:25.406'\'', -1, '\''2024-06-24 11:57:18.998009'\'', '\''ed590e7e-feed-43d5-bc73-9d40f0cd10df'\'', 2100000, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '\''022471'\'', '\''N'\'', NULL);'
+
+# 使用grep和sed命令截取所需的部分
+result=$(echo $string | grep -o "'026685'" | sed "s/'//g")
+
+# 输出结果
+echo $result
