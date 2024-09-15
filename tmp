@@ -1,12 +1,58 @@
-INSERT INTO "mit_base"."admin_organization_t" VALUES (153823, '026685', '619884', NULL, '白俄罗斯咨询与服务解决方案销售部', 'Belarus Consulting & Service Solution Sales Dept', '026683', '3071', 4, 'HR_ORG', 'Z33', '3307', '2009-05-20 00:00:00', '2018-04-12 00:00:00', 'N', -1, '2021-11-16 19:03:25.406', -1, '2024-06-24 11:57:18.998009', 'ed590e7e-feed-43d5-bc73-9d40f0cd10df', 2100000, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '022471', 'N', NULL);
+private Workbook getSteelBpaItemMaterialExport(List<SteelBpaItemMaterialDetailVO> steelBpaItemMaterialDetailList)
+            throws ApplicationException {
+        ExcelVO excelData = new ExcelVO();
+        excelData.setExportData(steelBpaItemMaterialDetailList);
+        excelData.setSheetName("Attachment Information");
+        setExportHeader(excelData);
+        excelData.setNeedRender(true);
+        // 单元格样式渲染行数，默认渲染2000行
+        excelData.setRenderRows(2000);
+        // 冻结行数，默认1行
+        excelData.setFreezeRows(1);
+        // 冻结列数，默认0列
+        excelData.setFreezeCols(0);
+        Workbook workbook = ExportExcelUtil.createGeneralExcel(excelData);
+        return workbook;
+    }
 
-#!/bin/bash
+    public static Workbook createGeneralExcel(ExcelVO exportVO) throws ApplicationException {
+        Workbook wb = new XSSFWorkbook(); // 创建Excel表
+        List<String> remarkList = exportVO.getExportRemark(); // 操作说明
+        // 单元格样式渲染行数
+        int randerRows = exportVO.getRenderRows();
+        // 导出模板的sheet名称
+        String sheetName = exportVO.getSheetName();
+        // 创建模板工作表
+        Sheet tempSheet = wb.createSheet(sheetName);
+        // 设置密码保护，超出保护的行，列将不可以编辑，同时不能直接复制行进行粘贴，只能选择保护范围内的区域复制粘贴
+        // 默认不保护
+        if (exportVO.isProtect()) {
+            tempSheet.protectSheet(HW_SRM_WEBD);
+        }
+        // 冻结前一行三列
+        tempSheet.createFreezePane(exportVO.getFreezeCols(), exportVO.getFreezeRows());
+        // 设置默认列的宽度
+        tempSheet.setDefaultColumnWidth(20);
+        // 设置所有列高度
+        tempSheet.setDefaultRowHeight((short) 500);
 
-# 定义包含目标字符串的变量
-string='INSERT INTO "mit_base"."admin_organization_t" VALUES (153823, '\''026685'\'', '\''619884'\'', NULL, '\''白俄罗斯咨询与服务解决方案销售部'\'', '\''Belarus Consulting & Service Solution Sales Dept'\'', '\''026683'\'', '\''3071'\'', 4, '\''HR_ORG'\'', '\''Z33'\'', '\''3307'\'', '\''2009-05-20 00:00:00'\'', '\''2018-04-12 00:00:00'\'', '\''N'\'', -1, '\''2021-11-16 19:03:25.406'\'', -1, '\''2024-06-24 11:57:18.998009'\'', '\''ed590e7e-feed-43d5-bc73-9d40f0cd10df'\'', 2100000, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '\''022471'\'', '\''N'\'', NULL);'
-
-# 使用awk提取第二个字段值
-result=$(echo $string | awk -F"[()]" '{print $2}' | awk -F", " '{gsub(/'\''/, "", $2); print $2}')
-
-# 输出结果
-echo $result
+        // 创建操作说明sheet
+        if (remarkList != null && !remarkList.isEmpty()) {
+            Sheet remarkSheet = wb.createSheet("Remark"); // 创建模板工作表
+            for (int i = 0; i < remarkList.size(); i++) {
+                Row remarkRow = remarkSheet.createRow(i);
+                remarkRow.createCell(0).setCellValue(remarkList.get(i));
+            }
+        }
+        LinkedHashMap<String, ExcelHeaderVO> headerMap = exportVO.getExportHeader(); // 列头
+        List<?> dataList = exportVO.getExportData(); // 数据内容
+        // 是否需要渲染出空白行
+        boolean needRender = exportVO.isNeedRender();
+        // 导出的数据方式，VO，MAP等
+        String dataType = exportVO.getDataType();
+        if (headerMap != null && !headerMap.isEmpty()) {
+            ExcelCellStyleVO styleBean = writeTempCell(tempSheet, headerMap, wb, randerRows);
+            renderRowData(tempSheet, dataList, dataType, headerMap, styleBean, needRender, randerRows);
+        }
+        return wb;
+    }
