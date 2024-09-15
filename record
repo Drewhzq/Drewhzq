@@ -1,50 +1,66 @@
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
-import org.apache.commons.compress.utils.IOUtils;
+public static Workbook createGeneralExcel(ExcelVO exportVO) throws ApplicationException {
+    Workbook wb = new XSSFWorkbook(); // 创建Excel表
+    List<String> remarkList = exportVO.getExportRemark(); // 操作说明
+    int randerRows = exportVO.getRenderRows(); // 单元格样式渲染行数
+    String sheetName = exportVO.getSheetName(); // 导出模板的sheet名称
+    Sheet tempSheet = wb.createSheet(sheetName); // 创建模板工作表
+    tempSheet.createFreezePane(exportVO.getFreezeCols(), exportVO.getFreezeRows()); // 冻结前几列和行
+    tempSheet.setDefaultColumnWidth(20); // 设置默认列宽
+    tempSheet.setDefaultRowHeight((short) 500); // 设置默认行高
 
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
+    LinkedHashMap<String, ExcelHeaderVO> headerMap = exportVO.getExportHeader(); // 列头
+    List<?> dataList = exportVO.getExportData(); // 数据内容
+    boolean needRender = exportVO.isNeedRender(); // 是否需要渲染出空白行
+    String dataType = exportVO.getDataType(); // 导出的数据类型
 
-public class ZipMultipleFolders {
-    public static void main(String[] args) {
-        List<String> sourceFolders = new ArrayList<>();
-        sourceFolders.add("/path/to/source/folder1"); // 替换为实际的第一个源文件夹路径
-        sourceFolders.add("/path/to/source/folder2"); // 替换为实际的第二个源文件夹路径
-        String zipFilePath = "/path/to/output/zip/file.zip"; // 替换为实际的输出zip文件路径
-
-        try {
-            FileOutputStream fos = new FileOutputStream(zipFilePath);
-            ZipArchiveOutputStream zos = new ZipArchiveOutputStream(fos);
-            for (String sourceFolderPath : sourceFolders) {
-                File sourceFolder = new File(sourceFolderPath);
-                zipFolder(sourceFolder, zos);
-            }
-            zos.finish();
-            zos.close();
-            fos.close();
-            System.out.println("多个文件夹已成功打包成zip文件！");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    if (headerMap != null && !headerMap.isEmpty()) {
+        ExcelCellStyleVO styleBean = writeTempCell(tempSheet, headerMap, wb, randerRows);
+        // 在渲染数据之前合并第一列相同的单元格
+        mergeSameFirstColumn(tempSheet, dataList, dataType);
+        renderRowData(tempSheet, dataList, dataType, headerMap, styleBean, needRender, randerRows);
     }
 
-    public static void zipFolder(File sourceFolder, ZipArchiveOutputStream zos) throws IOException {
-        ZipArchiveEntry zipEntry = new ZipArchiveEntry(sourceFolder.getName() + "/");
-        zos.putArchiveEntry(zipEntry);
-        zos.closeArchiveEntry();
+    return wb;
+}
 
-        for (File file : sourceFolder.listFiles()) {
-            if (file.isDirectory()) {
-                zipFolder(file, zos);
-            } else {
-                zipEntry = new ZipArchiveEntry(sourceFolder.getName() + "/" + file.getName());
-                zos.putArchiveEntry(zipEntry);
-                FileInputStream fis = new FileInputStream(file);
-                IOUtils.copy(fis, zos);
-                fis.close();
-                zos.closeArchiveEntry();
+private static void mergeSameFirstColumn(Sheet sheet, List<?> dataList, String dataType) {
+    int startRow = 1; // 数据从第1行开始
+    int lastRow = -1; // 记录相同值的最后一行
+    Object prevValue = null; // 记录前一行的值
+
+    for (int i = 0; i < dataList.size(); i++) {
+        Row row = sheet.getRow(i + startRow);
+        Object currentValue = getFirstColumnValue(dataList.get(i), dataType); // 获取第一列的值
+
+        if (prevValue != null && prevValue.equals(currentValue)) {
+            // 如果当前行的值与前一行相同，记录当前行
+            lastRow = i + startRow;
+        } else {
+            // 如果前一组有相同值的行，合并它们
+            if (lastRow > startRow) {
+                sheet.addMergedRegion(new CellRangeAddress(startRow, lastRow, 0, 0));
             }
+            // 重新开始记录新的相同值区域
+            startRow = i + startRow;
+            lastRow = startRow;
         }
+        prevValue = currentValue;
     }
+
+    // 处理最后一个相同的值区域
+    if (lastRow > startRow) {
+        sheet.addMergedRegion(new CellRangeAddress(startRow, lastRow, 0, 0));
+    }
+}
+
+private static Object getFirstColumnValue(Object dataRow, String dataType) {
+    // 根据数据类型，获取第一列的值
+    if ("VO".equals(dataType)) {
+        // 假设是VO对象，调用getter获取第一列的值
+        return ((YourDataVO) dataRow).getFirstColumn();
+    } else if ("MAP".equals(dataType)) {
+        // 如果是Map，直接取第一个key对应的值
+        return ((Map<?, ?>) dataRow).get("firstColumn");
+    }
+    return null;
 }
