@@ -1,58 +1,92 @@
-private Workbook getSteelBpaItemMaterialExport(List<SteelBpaItemMaterialDetailVO> steelBpaItemMaterialDetailList)
-            throws ApplicationException {
-        ExcelVO excelData = new ExcelVO();
-        excelData.setExportData(steelBpaItemMaterialDetailList);
-        excelData.setSheetName("Attachment Information");
-        setExportHeader(excelData);
-        excelData.setNeedRender(true);
-        // 单元格样式渲染行数，默认渲染2000行
-        excelData.setRenderRows(2000);
-        // 冻结行数，默认1行
-        excelData.setFreezeRows(1);
-        // 冻结列数，默认0列
-        excelData.setFreezeCols(0);
-        Workbook workbook = ExportExcelUtil.createGeneralExcel(excelData);
-        return workbook;
-    }
-
-    public static Workbook createGeneralExcel(ExcelVO exportVO) throws ApplicationException {
-        Workbook wb = new XSSFWorkbook(); // 创建Excel表
-        List<String> remarkList = exportVO.getExportRemark(); // 操作说明
-        // 单元格样式渲染行数
-        int randerRows = exportVO.getRenderRows();
-        // 导出模板的sheet名称
-        String sheetName = exportVO.getSheetName();
-        // 创建模板工作表
-        Sheet tempSheet = wb.createSheet(sheetName);
-        // 设置密码保护，超出保护的行，列将不可以编辑，同时不能直接复制行进行粘贴，只能选择保护范围内的区域复制粘贴
-        // 默认不保护
-        if (exportVO.isProtect()) {
-            tempSheet.protectSheet(HW_SRM_WEBD);
-        }
-        // 冻结前一行三列
-        tempSheet.createFreezePane(exportVO.getFreezeCols(), exportVO.getFreezeRows());
-        // 设置默认列的宽度
-        tempSheet.setDefaultColumnWidth(20);
-        // 设置所有列高度
-        tempSheet.setDefaultRowHeight((short) 500);
-
-        // 创建操作说明sheet
-        if (remarkList != null && !remarkList.isEmpty()) {
-            Sheet remarkSheet = wb.createSheet("Remark"); // 创建模板工作表
-            for (int i = 0; i < remarkList.size(); i++) {
-                Row remarkRow = remarkSheet.createRow(i);
-                remarkRow.createCell(0).setCellValue(remarkList.get(i));
-            }
-        }
-        LinkedHashMap<String, ExcelHeaderVO> headerMap = exportVO.getExportHeader(); // 列头
-        List<?> dataList = exportVO.getExportData(); // 数据内容
-        // 是否需要渲染出空白行
-        boolean needRender = exportVO.isNeedRender();
-        // 导出的数据方式，VO，MAP等
-        String dataType = exportVO.getDataType();
-        if (headerMap != null && !headerMap.isEmpty()) {
-            ExcelCellStyleVO styleBean = writeTempCell(tempSheet, headerMap, wb, randerRows);
-            renderRowData(tempSheet, dataList, dataType, headerMap, styleBean, needRender, randerRows);
-        }
-        return wb;
-    }
+SELECT
+	aast.ASL_ID "aslId",
+	aast.USING_ORGANIZATION_ID "usingOrganizationId",
+	aast.OWNING_ORGANIZATION_ID "owningOrganizationId",
+	aast.SUPPLIER_BUSINESS_TYPE "supplierBusinessType",
+	aast.ASL_STATUS_ID "aslStatusId",
+	aast.ASL_STATUS "aslStatus",
+	aast.MANUFACTURER "manufacturer",
+	aast.SUPPLIER_CODE "supplierCode",
+	aast.ITEM_NUMBER "itemNumber",
+	aast.OU_NAME "ouName",
+	aast.SUPPLIER_SITE_ID "supplierSiteId",
+	aast.SUPPLIER_SITE_CODE "supplierSiteCode",
+	aast.PRIMARY_SUPPLIER_ITEM "primarySupplierItem",
+	aast.REMARKS "remarks",
+	aast.PART_NUMBER "partNumber",
+	aast.IS_INSPEC_WAIVED_ITEM "isInspecWaivedItem",
+	aast.INSPECTION_MODEL "inspectionModel",
+	aast.MAX_PO_AMOUNT "maxPoAmount",
+	aast.DISABLE_FLAG "disableFlag",
+	aast.CREATION_DATE "aslCreationDate",
+	aast.LAST_UPDATE_DATE "aslLastUpdateDate",
+	aast.UNIT_CODE "unitCode",
+	aat.ASL_ATTRIBUTE_ID "aslAttributeId",
+	aat.LEAD_TIME "leadTime",
+	aat.MIN_ORDER_QUANTITY "minOrderQuantity",
+	aat.FIXED_LOT_MULTIPLE "fixedLotMultiple",
+	aat.CANCEL_WINDOW "cancelWindow",
+	aat.DELAY_WINDOW "delayWindow",
+	aat.RELEASE_METHOD "releaseMethod",
+	aat.BUSINESS_MODEL "businessModel",
+	aat.REBATE_FLAG "rebateFlag",
+	aat.CONSIGNED_FROM_SUPPLIER "consignedFromSupplier",
+	aat.BILLING_CYCLE "billingCycle",
+	aat.VCI_ITEM_TYPE "vciItemType",
+	aat.MIDDLE_SUPPLIER_CODE "middleSupplierCode",
+	aat.IS_BUBS_FLAG "isBubsFlag",
+	aat.SUPPLY_MODE "supplyMode",
+	aat.MATERIAL_SOURCE "materialSource",
+	aat.ICMS_ST_FLAG "icmsStFlag",
+	aat.BASIC_LEAD_TIME "basicLeadTime",
+	aat.MATERIAL_SOURCE "materialSource",
+	aat.LAST_BILLING_DATE "lastBillingDate",
+	aat.CREATION_DATE "attrCreationDate",
+	aat.LAST_UPDATE_DATE "attrLastUpdateDate",
+	aat.CREATED_BY "createdBy",
+	aat.LAST_UPDATED_BY "lastUpdatedBy",
+	aast.CLOSURE_TYPE "closureType",
+	aast.CLOSURE_REASON "closureReason",
+	aast.SOURCE_SYSTEM "sourceSystem" 
+FROM
+	ASL_APPROVAL_SUPPLIER_T aast,
+	ASL_ATTRIBUTE_T aat 
+WHERE
+	$8 = $9 
+	AND aast.ASL_ID = aat.ASL_ID 
+	AND EXISTS (
+	SELECT
+		$10FROM (
+		SELECT
+			aast.ASL_ID "aslId" 
+		FROM
+			ASL_APPROVAL_SUPPLIER_T aast 
+		WHERE
+			aast.LAST_UPDATE_DATE BETWEEN TO_TIMESTAMP( $1,$11 ) 
+			AND TO_TIMESTAMP( $2,$12 ) 
+			AND NOT EXISTS (
+			SELECT
+				$13FROM ASL_MQS_T amt 
+			WHERE
+				amt.ASL_ID = aast.ASL_ID 
+				AND amt.CREATION_DATE >= TO_TIMESTAMP( $3,$14 ) 
+				AND amt.CREATION_DATE >= aast.LAST_UPDATE_DATE 
+			) UNION ALL
+		SELECT
+			aat.ASL_ID "aslId" 
+		FROM
+			ASL_ATTRIBUTE_T aat 
+		WHERE
+			aat.LAST_UPDATE_DATE BETWEEN TO_TIMESTAMP( $4,$15 ) 
+			AND TO_TIMESTAMP( $5,$16 ) 
+			AND NOT EXISTS (
+			SELECT
+				$17FROM ASL_MQS_T amt 
+			WHERE
+				amt.ASL_ID = aat.ASL_ID 
+				AND amt.CREATION_DATE >= TO_TIMESTAMP( $6,$18 ) 
+				AND amt.CREATION_DATE >= aat.LAST_UPDATE_DATE 
+			) 
+		) AS adWHERE aast.ASL_ID = ad."aslId" 
+	) 
+	LIMIT $7
